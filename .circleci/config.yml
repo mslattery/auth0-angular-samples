@@ -21,7 +21,7 @@ defaults: &defaults
           name: Run pull request
           command: |
             docker build -t $CIRCLE_JOB ./$SAMPLE_PATH
-            docker run --network host -d -p $SAMPLE_PORT:3000 $CIRCLE_JOB
+            docker run --network host -d -p 3000:$SAMPLE_PORT $CIRCLE_JOB
 
       - run:
           name: Wait for app to be available
@@ -44,7 +44,8 @@ defaults: &defaults
 
 # Workflows
 version: 2
-jobs:
+##Job names are used as docker image tags. Must be lowercase!!
+jobs: 
   checkout:
     machine: true
     steps:
@@ -72,12 +73,12 @@ jobs:
       - SAMPLE_PATH: 02-User-Profile
     <<: *defaults
   
-  03-user-profile:
+  03-calling-an-api:
     machine: true
     environment:
       - SAMPLE_PORT: 3003    
-      - AUTH0_CFG: 03-User-Profile/src/app/auth/auth0-variables.ts
-      - SAMPLE_PATH: 03-User-Profile
+      - AUTH0_CFG: 03-Calling-an-API/src/app/auth/auth0-variables.ts
+      - SAMPLE_PATH: 03-Calling-an-API
     <<: *defaults
   
   04-authorization:
