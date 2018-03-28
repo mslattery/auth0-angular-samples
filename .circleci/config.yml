@@ -21,13 +21,13 @@ defaults: &defaults
           name: Run pull request
           command: |
             docker build -t $CIRCLE_JOB ./$SAMPLE_PATH
-            docker run --network host -d -p 3000:3000 $CIRCLE_JOB
+            docker run --network host -d -p $SAMPLE_PORT:3000 $CIRCLE_JOB
 
       - run:
           name: Wait for app to be available
           command: |
             sleep 10
-            docker run --network host --rm appropriate/curl --retry 10 --retry-connrefused -v $WEBAPP_URL
+            docker run --network host --rm appropriate/curl --retry 10 --retry-connrefused -v localhost:$SAMPLE_PORT
 
       - run: 
           name: Run tests
@@ -42,6 +42,7 @@ defaults: &defaults
       - store_artifacts:
           path: scripts/out
 
+# Workflows
 version: 2
 jobs:
   checkout:
@@ -58,17 +59,60 @@ jobs:
   01-login:
     machine: true
     environment:
-      - WEBAPP_URL: http://localhost:3000
+      - SAMPLE_PORT: 3001
       - AUTH0_CFG: 01-Login/src/app/auth/auth0-variables.ts
       - SAMPLE_PATH: 01-Login
+    <<: *defaults
 
+  02-user-profile:
+    machine: true
+    environment:
+      - SAMPLE_PORT: 3002      
+      - AUTH0_CFG: 02-User-Profile/src/app/auth/auth0-variables.ts
+      - SAMPLE_PATH: 02-User-Profile
+    <<: *defaults
+  
+  03-user-profile:
+    machine: true
+    environment:
+      - SAMPLE_PORT: 3003    
+      - AUTH0_CFG: 03-User-Profile/src/app/auth/auth0-variables.ts
+      - SAMPLE_PATH: 03-User-Profile
+    <<: *defaults
+  
+  04-authorization:
+    machine: true
+    environment:
+      - SAMPLE_PORT: 3004
+      - AUTH0_CFG: 04-Authorization/src/app/auth/auth0-variables.ts
+      - SAMPLE_PATH: 04-Authorization
+    <<: *defaults
+  
+  05-token-renewal:
+    machine: true
+    environment:
+      - SAMPLE_PORT: 3005
+      - AUTH0_CFG: 05-Token-Renewal/src/app/auth/auth0-variables.ts
+      - SAMPLE_PATH: 05-Token-Renewal
     <<: *defaults
 
 workflows:
   version: 2
-  quickstarts:
+  login_with_samples:
     jobs:
       - checkout
       - 01-login:
+          requires:
+            - checkout
+      - 02-user-profile:
+          requires:
+            - checkout
+      - 03-calling-an-api:
+          requires:
+            - checkout
+      - 04-authorization:
+          requires:
+            - checkout
+      - 05-token-renewal:
           requires:
             - checkout
